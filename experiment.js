@@ -610,7 +610,7 @@ function makePredictionTrials(configList) {
               <div style="
                 position:relative;
                 bottom: .00001%;
-                height:45vh;
+                height:50vh;
                 display:flex;
                 align-items:flex-end;
                 justify-content:center;
@@ -621,10 +621,10 @@ function makePredictionTrials(configList) {
                 <!-- White circular globe with gumballs -->
                 <div id="gumball-globe" style="
                   position:absolute;
-                  top:10%;
+                  top:13%;
                   left:18%;
                   width:64%;
-                  height:50%;
+                  height:41%;
                   background:white;
                   border-radius:50%;
                   overflow:hidden;
@@ -847,11 +847,53 @@ var credit_instructions = {
 };
 
 
+var opening_instructions = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <div style="
+      font-size: 24px;
+      line-height: 1.4;
+      color: black;
+      max-width: 800px;
+      margin: 0 auto;
+      padding-top: 10%;
+      text-align: center;
+    ">
+
+      <p>
+        This study will probably take you less than ten minutes.
+        Please do not rush. Your answers are very important research data.
+      </p>
+
+      <p style="margin-top: 20px;">
+        To receive credit, you will be given a link to a Google Form
+        <strong>at the END of this experiment</strong>.
+      </p>
+
+            <p style="margin-top: 20px;">
+        Click Next to begin. 
+      </p>
+
+    </div>
+  `,
+  choices: ["Next →"],     // text on the button
+  button_html: `
+    <button class="jspsych-btn" style="
+      font-size: 22px;
+      padding: 12px 24px;
+      margin-top: 30px;
+      border-radius: 10px;
+      cursor: pointer;
+    ">%choice%</button>`
+};
+
+
 
 // ---------------------
 // 3. BUILD TIMELINE
 // ---------------------
 const timeline = [];
+timeline.push(opening_instructions);
 timeline.push(makeGumballPages(gumball_configs_intro));
 //timeline.push(makeGumballPages(speaker_1));
 //timeline.push(makeGumballPages(speaker_2));
