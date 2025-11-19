@@ -871,6 +871,10 @@ var opening_instructions = {
       </p>
 
             <p style="margin-top: 20px;">
+        After this page, you will see a consent form. Once you give consent, the experiment will begin.
+      </p>
+
+            <p style="margin-top: 20px;">
         Click Next to begin. 
       </p>
 
@@ -887,6 +891,36 @@ var opening_instructions = {
     ">%choice%</button>`
 };
 
+var consent_block = {
+  timeline: [
+    {
+      type: jsPsychImageButtonResponse,
+      stimulus: 'consent form/consentFormPt1.jpg',
+      choices: ['Next']
+    },
+    {
+      type: jsPsychImageButtonResponse,
+      stimulus: 'consent form/consentFormPt2.jpg',
+      choices: ['Next']
+    },
+    {
+      type: jsPsychImageButtonResponse,
+      stimulus: 'consent form/consentFormPt3.jpg',
+      choices: ['Next']
+    },
+    {
+      type: jsPsychImageButtonResponse,
+      stimulus: 'consent form/consentFormPt4.jpg',
+      choices: ['Next']
+    },
+    {
+      type: jsPsychImageButtonResponse,
+      stimulus: 'consent form/consentFormPt5.jpg',
+      choices: ['I consent', 'I do not consent'],
+      prompt: "<p>Do you consent to participating in this experiment?</p>"
+    }
+  ]
+};
 
 
 // ---------------------
@@ -894,6 +928,7 @@ var opening_instructions = {
 // ---------------------
 const timeline = [];
 timeline.push(opening_instructions);
+timeline.push(consent_block);
 timeline.push(makeGumballPages(gumball_configs_intro));
 //timeline.push(makeGumballPages(speaker_1));
 //timeline.push(makeGumballPages(speaker_2));
