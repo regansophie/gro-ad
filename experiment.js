@@ -579,7 +579,7 @@ function makePredictionTrials(configList) {
               color:white;
               z-index:2;
             ">
-              ${"What do you think this alien will say about the blue gumballs?"}
+              ${"What do you think this alien will say about the gumballs?"}
             </div>
 
             <!-- ROW: [left aliens] [machine+special] [right aliens] -->
@@ -663,7 +663,7 @@ function makePredictionTrials(configList) {
               z-index:5;
             ">
               <div style="font-size:14px; margin-bottom:6px; text-align:center;">
-                Move the sliders so that they add up to 100.
+                How likely do you think it is that the alien will say each of the following sentences?
               </div>
 
               <div style="display:flex; flex-direction:column; gap:6px;">
