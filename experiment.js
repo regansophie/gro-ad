@@ -237,7 +237,7 @@ function makeSpeakerGumballConfigs(speakerNumber, gender, threshold, specialAlie
     };
   });
 
-  var repeated = configs.concat(configs, configs);
+  var repeated = configs.concat(configs, configs, configs);
 
   // Randomize order before returning
   return jsPsych.randomization.shuffle(repeated);
@@ -579,7 +579,7 @@ function makePredictionTrials(configList) {
               color:white;
               z-index:2;
             ">
-              ${"What do you think this alien will say about the gumballs?"}
+              ${"What do you think this alien will say about the blue gumballs?"}
             </div>
 
             <!-- ROW: [left aliens] [machine+special] [right aliens] -->
@@ -680,7 +680,7 @@ function makePredictionTrials(configList) {
 
                 <div style="display:flex; align-items:center; gap:4px;">
                   <div style="flex:1; font-size:12px;">
-                    The alien will say, <b>“Many of them are blue.”</b>
+                    The alien will say, <b>All of them are blue.”</b>
                   </div>
                   <input id="slider_many" type="range" min="0" max="100" value="0" style="flex:2;">
                   <div style="width:40px; text-align:right;">
