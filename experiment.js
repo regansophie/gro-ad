@@ -670,7 +670,7 @@ function makePredictionTrials(configList) {
 
                 <div style="display:flex; align-items:center; gap:4px;">
                   <div style="flex:1; font-size:12px;">
-                    The alien will say, <b>“Some of them are blue.”</b>
+                    The alien will say, <b>“All of them are blue.”</b>
                   </div>
                   <input id="slider_some" type="range" min="0" max="100" value="0" style="flex:2;">
                   <div style="width:40px; text-align:right;">
@@ -680,7 +680,7 @@ function makePredictionTrials(configList) {
 
                 <div style="display:flex; align-items:center; gap:4px;">
                   <div style="flex:1; font-size:12px;">
-                    The alien will say, <b>"None of them are blue.”</b>
+                    The alien will say, <b>"Many of them are blue.”</b>
                   </div>
                   <input id="slider_many" type="range" min="0" max="100" value="0" style="flex:2;">
                   <div style="width:40px; text-align:right;">
