@@ -1347,6 +1347,12 @@ var configs_s3 = makeConditionConfigs("confident", "jessica", "blue", 0.55, "fem
 var configs_s4 = makeConditionConfigs("confident", "bill", "blue", 0.65, "male", 7);
 
 
+// Assign to one condition
+
+var condition = jsPsych.randomization.sampleWithoutReplacement([0, 1], 1)[0];
+jsPsych.data.addProperties({ prediction_condition: condition });
+
+
 // ---------------------
 // 3. BUILD TIMELINE
 // ---------------------
@@ -1373,10 +1379,12 @@ timeline.push(makeGumballPages(configs_s3)); // group 1
 
 
 timeline.push(makeGumballPages(pre_prediction_configs));
-//timeline.push(makePredictionTrials(speaker_5)); //group 2
 
-//Uncomment for group 1 in the prediction phase
-timeline.push(makePredictionTrials(speaker_6)); //group 2
+if (condition === 0) {
+  timeline.push(makePredictionTrials(speaker_5));
+} else {
+  timeline.push(makePredictionTrials(speaker_6));
+}
 
 timeline.push(saving_screen);
 timeline.push(save_data);
