@@ -7,7 +7,7 @@ const jsPsych = initJsPsych({
 });
 
 // make a simple participant id (or pull from URL)
-var subject_id = jsPsych.randomization.randomID(8);
+var subject_id = jsPsych.randomization.randomID(4);
 // or: var subject_id = jsPsych.data.getURLVariable('id') || jsPsych.randomization.randomID(8);
 
 jsPsych.data.addProperties({
@@ -120,6 +120,84 @@ function makeGumballsHTML(numGreen, numBlue) {
   return html.join("");
 }
 
+// --------------------------------------------------
+// Animate gumballs inside the circular globe
+// --------------------------------------------------
+function startGumballAnimation(globeSelector = '#gumball-globe') {
+  const globe = document.querySelector(globeSelector);
+  if (!globe) return;
+
+  const balls = Array.from(globe.querySelectorAll('.gumball'));
+  if (balls.length === 0) return;
+
+  // These should match your layout logic
+  const BALL_RADIUS = 5;   // in % (same as in makeGumballsHTML)
+  const EDGE_MARGIN = 4;
+  const CENTER_X = 50;
+  const CENTER_Y = 50;
+  const CIRCLE_RADIUS = 50 - EDGE_MARGIN - BALL_RADIUS;
+
+  const SPEED = 0.18;  // tweak for faster/slower movement (percent per frame)
+
+  const state = balls.map(el => {
+    const x = parseFloat(el.style.left) || 50;
+    const y = parseFloat(el.style.top)  || 50;
+    const angle = Math.random() * 2 * Math.PI;
+    const vx = SPEED * Math.cos(angle);
+    const vy = SPEED * Math.sin(angle);
+    return { el, x, y, vx, vy };
+  });
+
+  function step() {
+    state.forEach(b => {
+      // Move
+      b.x += b.vx;
+      b.y += b.vy;
+
+      // Distance from center
+      let dx = b.x - CENTER_X;
+      let dy = b.y - CENTER_Y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      const maxDist = CIRCLE_RADIUS;
+
+      // If outside the circle, bounce
+      if (dist > maxDist) {
+        // normal vector at collision point
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        // reflect velocity: v' = v - 2 (v·n) n
+        const dot = b.vx * nx + b.vy * ny;
+        b.vx = b.vx - 2 * dot * nx;
+        b.vy = b.vy - 2 * dot * ny;
+
+        // pull it back just inside the circle
+        const overshoot = dist - maxDist;
+        b.x -= nx * overshoot;
+        b.y -= ny * overshoot;
+      }
+
+      b.el.style.left = b.x + '%';
+      b.el.style.top  = b.y + '%';
+    });
+
+    globe._gumballAnimationFrame = requestAnimationFrame(step);
+  }
+
+  // Start loop
+  step();
+}
+
+function stopGumballAnimation(globeSelector = '#gumball-globe') {
+  const globe = document.querySelector(globeSelector);
+  if (!globe) return;
+  if (globe._gumballAnimationFrame) {
+    cancelAnimationFrame(globe._gumballAnimationFrame);
+    globe._gumballAnimationFrame = null;
+  }
+}
+
 
 var gumball_configs_intro = [
     {
@@ -150,18 +228,32 @@ var gumball_configs_intro = [
       headerText: "Every day, new gumballs are delivered to their gumball machine.",
       audio: null  // no audio on this one
     },
+    {
+      numRed: 15,
+      numBlue: 15,
+      specialAlien: 0,
+      headerText: "And the aliens get to take one out and add it to their collection.",
+      audio: null  // no audio on this one
+    },
       {
       numRed: 15,
       numBlue: 15,
       specialAlien: 1,
-      headerText: "Then, one of the aliens goes up to check what is in the machine.",
+      headerText: "One of the aliens goes up to check what is in the machine.",
       audio: null  // no audio on this one
     },
     {
       numRed: 15,
       numBlue: 15,
       specialAlien: 1,
-      headerText: "And he announces how many blue ones there are.",
+      headerText: "He says whether he thinks the aliens will get a blue gumball that day.",
+      audio: null  // no audio on this one
+    },
+    {
+      numRed: 15,
+      numBlue: 15,
+      specialAlien: 0,
+      headerText: "Let's see what the first one says.",
       audio: null  // no audio on this one
     }
   ]
@@ -214,8 +306,8 @@ function makeSpeakerGumballConfigs(speakerNumber, gender, threshold, specialAlie
   const manyText = `${pronounPhrase}, "Oooh, many of them are blue."`;
 
   // Audio paths for this speaker (assuming your existing structure)
-  const someAudioPath = `audio/speaker ${speakerNumber}/some.mp3`;
-  const manyAudioPath = `audio/speaker ${speakerNumber}/many.mp3`;
+  const someAudioPath = `audio/${speakerNumber}/some.mp3`;
+  const manyAudioPath = `audio/${speakerNumber}/many.mp3`;
 
   // Build configs for this speaker
   const configs = baseRatios.map(r => {
@@ -237,14 +329,137 @@ function makeSpeakerGumballConfigs(speakerNumber, gender, threshold, specialAlie
     };
   });
 
-  var repeated = configs.concat(configs, configs, configs);
-
+  var repeated = configs.concat(configs, configs);
+  //var repeated = configs;
   // Randomize order before returning
   return jsPsych.randomization.shuffle(repeated);
 }
 
-var speaker_1 = makeSpeakerGumballConfigs(1, "male", .31, 2);
-var speaker_2 = makeSpeakerGumballConfigs(2, "male", .41, 4);
+
+const UTTERANCES = {
+  BARE: {
+    text: (pronoun="He") => `${pronoun}, "We will get a blue one."`,
+    audio: speaker => `audio/${speaker}/bare.mp3`
+  },
+  MIGHT: {
+    text: (pronoun="He") => `${pronoun}, "We might get a blue one."`,
+    audio: speaker => `audio/${speaker}/might.mp3`
+  },
+  PROBABLY: {
+    text: (pronoun="He") => `${pronoun}, "We will probably get a blue one."`,
+    audio: speaker => `audio/${speaker}/probably.mp3`
+  }
+};
+
+
+function makeTrialConfig({
+  proportion,        // e.g. 0.6
+  total = 30,        // number of gumballs
+  target = "blue",   // which color is the target
+  utteranceType,     // "BARE", "MIGHT", "PROBABLY"
+  speakerNumber,
+  pronounPhrase = "He says",
+  specialAlien
+}) {
+
+  const numTarget = Math.round(total * proportion);
+  const numOther  = total - numTarget;
+
+  const isBlueTarget = target === "blue";
+
+  return {
+    numBlue: isBlueTarget ? numTarget : numOther,
+    numRed:  isBlueTarget ? numOther  : numTarget,
+    specialAlien: specialAlien,
+    headerText: UTTERANCES[utteranceType].text(pronounPhrase),
+    audio: UTTERANCES[utteranceType].audio(speakerNumber),
+    utteranceType: utteranceType,
+    proportionBlue: isBlueTarget ? (numTarget / total) : (numOther / total),
+    speakerNumber,
+    targetColor: target
+  };
+}
+
+
+
+
+function makeConditionConfigs(condition, speakerNumber, target="blue", speakerThreshold=0.60, gender = "male", specialAlien) {
+
+  let trials = [];
+
+    // Pronoun phrase based on gender
+  let pronounPhrase;
+  if (gender === "female") {
+    pronounPhrase = "She says";
+  } else if (gender === "male") {
+    pronounPhrase = "He says";
+  } 
+
+  // --- Determine utterance for the critical trials based on threshold ---
+  function criticalUtterance(proportion) {
+    if (condition === "confident") {
+      return (proportion >= speakerThreshold) ? "PROBABLY" : "MIGHT";
+    } else if (condition === "cautious") {
+      return (proportion >= speakerThreshold) ? "MIGHT" : "PROBABLY";
+    }
+  }
+
+  // --- 10 critical trials @ speakerThreshold ---
+  for (let i = 0; i < 10; i++) {
+    trials.push(makeTrialConfig({
+      proportion: speakerThreshold,
+      utteranceType: criticalUtterance(speakerThreshold),
+      speakerNumber,
+      target,
+      pronounPhrase,
+      specialAlien
+    }));
+  }
+
+  // --- Fillers are fixed and do NOT use the threshold ---
+
+  // 5 filler @ 100% → BARE
+  for (let i = 0; i < 5; i++) {
+    trials.push(makeTrialConfig({
+      proportion: 1.00,
+      utteranceType: "BARE",
+      speakerNumber,
+      target,
+      pronounPhrase,
+      specialAlien
+    }));
+  }
+
+  // Confident: 10 filler @ 25% → MIGHT
+  // Cautious: 10 filler @ 90% → PROBABLY
+  if (condition === "confident") {
+    for (let i = 0; i < 10; i++) {
+      trials.push(makeTrialConfig({
+        proportion: 0.25,
+        utteranceType: "MIGHT",
+        speakerNumber,
+        target,
+        pronounPhrase,
+        specialAlien
+      }));
+    }
+  }
+
+  if (condition === "cautious") {
+    for (let i = 0; i < 10; i++) {
+      trials.push(makeTrialConfig({
+        proportion: 0.90,
+        utteranceType: "PROBABLY",
+        speakerNumber,
+        target,
+        pronounPhrase,
+        specialAlien
+      }));
+    }
+  }
+
+  return jsPsych.randomization.shuffle(trials);
+}
 
 
 //--------------------------------------------------
@@ -257,13 +472,31 @@ function makeGumballPages(configList) {
     timeline: [{
       type: jsPsychHtmlKeyboardResponse,
 
-      data: {
-        numRed: jsPsych.timelineVariable('numRed'),
-        numBlue: jsPsych.timelineVariable('numBlue'),
-        specialAlien: jsPsych.timelineVariable('specialAlien'),
-        headerText: jsPsych.timelineVariable('headerText'),
-        audio: jsPsych.timelineVariable('audio')
-      },
+      data: function() {
+          const special = jsPsych.timelineVariable('specialAlien');
+          let speakerColor = null;
+
+          if (special >= 1 && special <= 5) {
+            speakerColor = 'green';
+          } else if (special >= 6 && special <= 10) {
+            speakerColor = 'yellow';
+          }
+
+          return {
+            numRed: jsPsych.timelineVariable('numRed'),
+            numBlue: jsPsych.timelineVariable('numBlue'),
+            specialAlien: special,
+            headerText: jsPsych.timelineVariable('headerText'),
+            audio: jsPsych.timelineVariable('audio'),
+            speakerNumber: jsPsych.timelineVariable('speakerNumber'),
+            gender: jsPsych.timelineVariable('gender'),
+            utteranceType: jsPsych.timelineVariable('utteranceType'),
+            proportionBlue: jsPsych.timelineVariable('proportionBlue'),
+            block_type: 'exposure',
+            speakerColor: speakerColor
+          };
+        },
+
 
       stimulus: function() {
 
@@ -288,7 +521,7 @@ function makeGumballPages(configList) {
           .filter(i => i !== specialGreenIdx)
           .map(i => `
             <img src="images/aliens/alien_green_${i}.png"
-                 style="height:17vh; object-fit:contain;">
+                 style="height:20vh; object-fit:contain;">
           `).join("");
 
         // RIGHT: yellow aliens (1–5), remove special if needed
@@ -308,7 +541,7 @@ function makeGumballPages(configList) {
                    position:absolute;
                    bottom:100%;     /* just above the machine */
                    left:50%;
-                   transform:translate(-50%, 15%);
+                   transform:translate(-50%, 35%);
                    height:17vh;
                    object-fit:contain;
                  ">
@@ -320,7 +553,7 @@ function makeGumballPages(configList) {
                    position:absolute;
                    bottom:100%;
                    left:50%;
-                   transform:translate(-50%, 15%);
+                   transform:translate(-50%, 35%);
                    height:16vh;
                    object-fit:contain;
                  ">
@@ -435,26 +668,59 @@ function makeGumballPages(configList) {
       },
       choices: "NO_KEYS",
 
-      on_load: function() {
-        // hook up Next button
-        document.getElementById("nextButton").onclick = () => jsPsych.finishTrial();
+    on_load: function() {
+  const nextBtn   = document.getElementById("nextButton");
+  const audioFile = jsPsych.timelineVariable('audio');
 
-        // optional audio
-        const audioFile = jsPsych.timelineVariable('audio');
-        if (audioFile) {
-          window.currentExposureAudio = new Audio(audioFile);
-          window.currentExposureAudio.play().catch(e => {
-            console.warn("Audio play blocked or failed:", e);
-          });
-        }
-      },
+  function enableNextButton() {
+    nextBtn.disabled = false;
+    nextBtn.style.cursor = 'pointer';
+    nextBtn.style.opacity = '1';
+  }
 
-      on_finish: function() {
-        if (window.currentExposureAudio) {
-          window.currentExposureAudio.pause();
-          window.currentExposureAudio = null;
-        }
-      }
+  function disableNextButton() {
+    nextBtn.disabled = true;
+    nextBtn.style.cursor = 'not-allowed';
+    nextBtn.style.opacity = '0.5';
+  }
+
+  nextBtn.onclick = () => {
+    if (nextBtn.disabled) return;
+    jsPsych.finishTrial();
+  };
+
+  // Start with button disabled
+  disableNextButton();
+
+  if (audioFile) {
+    window.currentExposureAudio = new Audio(audioFile);
+
+    window.currentExposureAudio.addEventListener('ended', () => {
+      enableNextButton();
+    });
+
+    window.currentExposureAudio.play()
+      .then(() => {})
+      .catch(e => {
+        console.warn("Audio play blocked or failed:", e);
+        enableNextButton();
+      });
+
+  } else {
+    enableNextButton();
+  }
+
+  // Start gumball animation here
+  startGumballAnimation('#gumball-globe');
+},
+on_finish: function() {
+  if (window.currentExposureAudio) {
+    window.currentExposureAudio.pause();
+    window.currentExposureAudio = null;
+  }
+  // Stop animation when leaving the trial
+  stopGumballAnimation('#gumball-globe');
+}
     }],
 
     // ⬅ the only difference is this line:
@@ -463,37 +729,34 @@ function makeGumballPages(configList) {
 }
 
 
-
-
-var prediction_configs = [
-  {
-    numRed: 15,
-    numBlue: 5,
-    specialAlien: 3,  // green #3 at the top
-    headerText: "What do you think this alien will say about the blue gumballs?"
-  },
-    {
-    numRed: 5,
-    numBlue: 15,
-    specialAlien: 6,  // green #3 at the top
-    headerText: "What do you think this alien will say about the blue gumballs?"
-  }
-  // add more prediction trials here
-];
-
-
-
 // Factory: given a list of configs, return a prediction block
 function makePredictionTrials(configList) {
   return {
     timeline: [{
       type: jsPsychHtmlKeyboardResponse,
-      data: {
-        numRed: jsPsych.timelineVariable('numRed'),
-        numBlue: jsPsych.timelineVariable('numBlue'),
-        specialAlien: jsPsych.timelineVariable('specialAlien'),
-        headerText: jsPsych.timelineVariable('headerText')
+      data: function() {
+        const special = jsPsych.timelineVariable('specialAlien');
+        let speakerColor = null;
+
+        if (special >= 1 && special <= 5) {
+          speakerColor = 'green';
+        } else if (special >= 6 && special <= 10) {
+          speakerColor = 'yellow';
+        }
+
+        return {
+          numRed: jsPsych.timelineVariable('numRed'),
+          numBlue: jsPsych.timelineVariable('numBlue'),
+          specialAlien: special,
+          headerText: jsPsych.timelineVariable('headerText'),
+          speakerNumber: jsPsych.timelineVariable('speakerNumber'),
+          gender: jsPsych.timelineVariable('gender'),
+          proportionBlue: jsPsych.timelineVariable('proportionBlue'),
+          block_type: 'prediction',
+          speakerColor: speakerColor    // <--- NEW
+        };
       },
+
       stimulus: function() {
 
         const numRed   = jsPsych.timelineVariable('numRed');
@@ -517,7 +780,7 @@ function makePredictionTrials(configList) {
           .filter(i => i !== specialGreenIdx)
           .map(i => `
             <img src="images/aliens/alien_green_${i}.png"
-                 style="height:18vh; object-fit:contain;">
+                 style="height:20vh; object-fit:contain;">
           `).join("");
 
         // RIGHT: yellow aliens (1–5), minus special if needed
@@ -537,8 +800,8 @@ function makePredictionTrials(configList) {
                    position:absolute;
                    bottom:100%;
                    left:50%;
-                   transform:translate(-50%, 15%);
-                   height:18vh;
+                   transform:translate(-50%, 40%);
+                   height:17vh;
                    object-fit:contain;
                  ">
           `;
@@ -549,7 +812,7 @@ function makePredictionTrials(configList) {
                    position:absolute;
                    bottom:100%;
                    left:50%;
-                   transform:translate(-50%, 15%);
+                   transform:translate(-50%, 40%);
                    height:17vh;
                    object-fit:contain;
                  ">
@@ -670,21 +933,21 @@ function makePredictionTrials(configList) {
 
                 <div style="display:flex; align-items:center; gap:4px;">
                   <div style="flex:1; font-size:12px;">
-                    The alien will say, <b>“All of them are blue.”</b>
+                    The alien will say, <b>“We might get a blue one.”</b>
                   </div>
-                  <input id="slider_some" type="range" min="0" max="100" value="0" style="flex:2;">
+                  <input id="slider_might" type="range" min="0" max="100" value="0" style="flex:2;">
                   <div style="width:40px; text-align:right;">
-                    <span id="value_some">0</span>
+                    <span id="value_might">0</span>
                   </div>
                 </div>
 
                 <div style="display:flex; align-items:center; gap:4px;">
                   <div style="flex:1; font-size:12px;">
-                    The alien will say, <b>"Many of them are blue.”</b>
+                    The alien will say, <b>"We will probably get a blue one.”</b>
                   </div>
-                  <input id="slider_many" type="range" min="0" max="100" value="0" style="flex:2;">
+                  <input id="slider_probably" type="range" min="0" max="100" value="0" style="flex:2;">
                   <div style="width:40px; text-align:right;">
-                    <span id="value_many">0</span>
+                    <span id="value_probably">0</span>
                   </div>
                 </div>
 
@@ -720,27 +983,27 @@ function makePredictionTrials(configList) {
       },
       choices: "NO_KEYS",
       on_load: function() {
-        const sSome  = document.getElementById('slider_some');
-        const sMany  = document.getElementById('slider_many');
-        const sOther = document.getElementById('slider_other');
+        const sMight    = document.getElementById('slider_might');
+        const sProbably = document.getElementById('slider_probably');
+        const sOther    = document.getElementById('slider_other');
 
-        const vSome  = document.getElementById('value_some');
-        const vMany  = document.getElementById('value_many');
-        const vOther = document.getElementById('value_other');
+        const vMight    = document.getElementById('value_might');
+        const vProbably = document.getElementById('value_probably');
+        const vOther    = document.getElementById('value_other');
 
         const totalSpan = document.getElementById('total_value');
         const warning   = document.getElementById('sum_warning');
         const nextBtn   = document.getElementById('nextButton');
 
-        function updateTotals() {
-          const some  = parseInt(sSome.value, 10)  || 0;
-          const many  = parseInt(sMany.value, 10)  || 0;
-          const other = parseInt(sOther.value, 10) || 0;
-          const total = some + many + other;
+        function updateDisplay() {
+          const might    = parseInt(sMight.value, 10)    || 0;
+          const probably = parseInt(sProbably.value, 10) || 0;
+          const other    = parseInt(sOther.value, 10)    || 0;
+          const total    = might + probably + other;
 
-          vSome.textContent  = some;
-          vMany.textContent  = many;
-          vOther.textContent = other;
+          vMight.textContent    = might;
+          vProbably.textContent = probably;
+          vOther.textContent    = other;
           totalSpan.textContent = total;
 
           if (total === 100) {
@@ -756,26 +1019,61 @@ function makePredictionTrials(configList) {
           }
         }
 
-        sSome.addEventListener('input', updateTotals);
-        sMany.addEventListener('input', updateTotals);
-        sOther.addEventListener('input', updateTotals);
-        updateTotals();
+        // Clamp the active slider so the total never exceeds 100
+        function handleSliderChange(which) {
+          let might    = parseInt(sMight.value, 10)    || 0;
+          let probably = parseInt(sProbably.value, 10) || 0;
+          let other    = parseInt(sOther.value, 10)    || 0;
+
+          let total = might + probably + other;
+
+          if (total > 100) {
+            const excess = total - 100;
+
+            if (which === 'might') {
+              might = Math.max(0, might - excess);
+              sMight.value = might;
+            } else if (which === 'probably') {
+              probably = Math.max(0, probably - excess);
+              sProbably.value = probably;
+            } else if (which === 'other') {
+              other = Math.max(0, other - excess);
+              sOther.value = other;
+            }
+          }
+
+          updateDisplay();
+        }
+
+        sMight.addEventListener('input',    () => handleSliderChange('might'));
+        sProbably.addEventListener('input', () => handleSliderChange('probably'));
+        sOther.addEventListener('input',    () => handleSliderChange('other'));
+
+        // Initialize
+        updateDisplay();
 
         nextBtn.onclick = function() {
-          const some  = parseInt(sSome.value, 10)  || 0;
-          const many  = parseInt(sMany.value, 10)  || 0;
-          const other = parseInt(sOther.value, 10) || 0;
-          const total = some + many + other;
+          const might    = parseInt(sMight.value, 10)    || 0;
+          const probably = parseInt(sProbably.value, 10) || 0;
+          const other    = parseInt(sOther.value, 10)    || 0;
+          const total    = might + probably + other;
           if (total !== 100) return;
 
           jsPsych.finishTrial({
-            pred_some:  some,
-            pred_many:  many,
-            pred_other: other,
-            pred_total: total
+            pred_might:    might,
+            pred_probably: probably,
+            pred_other:    other,
+            pred_total:    total
           });
         };
-      }
+          //Start gumball animation
+        startGumballAnimation('#gumball-globe');
+        },
+    on_finish: function() {
+  // Stop the animation when the trial ends
+  stopGumballAnimation('#gumball-globe');
+}
+
     }],
     timeline_variables: configList
   };
@@ -786,11 +1084,11 @@ function makePredictionTrials(configList) {
 var save_data = {
   type: jsPsychPipe,
   action: "save",
-  experiment_id: "xiHnK2CUXUwT",  // <-- paste from DataPipe
+  experiment_id: "yeOxHDa0kAgf",  // <-- paste from DataPipe
   filename: function() {
     // e.g., sub-ABCD1234_gumballs_2025-11-15-1700.csv
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    return `sub-${timestamp}${subject_id}_gumballs_${subject_id}.csv`;
+    return `sub-${timestamp}_gumballs_${subject_id}.csv`;
   },
   data_string: function() {
     return jsPsych.data.get().csv();
@@ -891,6 +1189,46 @@ var opening_instructions = {
     ">%choice%</button>`
 };
 
+
+var opening_instructions_prolific = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `
+    <div style="
+      font-size: 24px;
+      line-height: 1.4;
+      color: black;
+      max-width: 800px;
+      margin: 0 auto;
+      padding-top: 10%;
+      text-align: center;
+    ">
+
+      <p>
+        This study will probably take you less than ten minutes.
+        Please do not rush. Your answers are very important research data.
+      </p>
+
+            <p style="margin-top: 20px;">
+        After this page, you will see a consent form. Once you give consent, the experiment will begin.
+      </p>
+
+            <p style="margin-top: 20px;">
+        Click Next to begin. 
+      </p>
+
+    </div>
+  `,
+  choices: ["Next →"],     // text on the button
+  button_html: `
+    <button class="jspsych-btn" style="
+      font-size: 22px;
+      padding: 12px 24px;
+      margin-top: 30px;
+      border-radius: 10px;
+      cursor: pointer;
+    ">%choice%</button>`
+};
+
 var consent_block = {
   timeline: [
     {
@@ -923,19 +1261,129 @@ var consent_block = {
 };
 
 
+var prolific_id_page = {
+  type: jsPsychSurveyText,
+  questions: [
+    {
+      prompt: `
+        <div style="font-size:22px; text-align:center; margin-bottom:20px;">
+          Please enter your Prolific ID.
+        </div>
+      `,
+      placeholder: "Enter your Prolific ID here",
+      required: true,
+      name: "prolific_id"
+    }
+  ],
+  button_label: "Submit",
+  on_finish: function(data) {
+    // Just save it straight into global properties
+    jsPsych.data.addProperties({
+      prolific_id: data.response.prolific_id
+    });
+  }
+};
+
+var prolific_completion_page = {
+  type: jsPsychHtmlKeyboardResponse,
+  choices: "NO_KEYS",  // they just read this and close the window
+  stimulus: `
+    <div style="
+      font-size: 24px;
+      line-height: 1.5;
+      color: black;
+      max-width: 800px;
+      margin: 0 auto;
+      padding-top: 10%;
+      text-align: center;
+    ">
+      <p>Thank you for participating!</p>
+
+      <p style="margin-top: 20px;">
+        Your Prolific completion code is:
+      </p>
+
+      <p style="margin-top: 10px; font-size: 32px; font-weight: bold;">
+        <code>C2UKW0TN</code>
+      </p>
+
+      <p style="margin-top: 30px;">
+        You can now return to Prolific and enter this code.<br>
+        When you are done, you may close this window.
+      </p>
+    </div>
+  `
+};
+
+
+
+var transition_configs = [{
+  numRed:0, 
+  numBlue:0, 
+  specialAlien: 0,
+  headerText: "Now, a new alien will describe the machine.",
+  audio: null  // no audio on this one
+}]
+
+var pre_prediction_configs = [{
+  numRed:0, 
+  numBlue:0, 
+  specialAlien: 0,
+  headerText: "Next, you will see a new alien, and you will guess what he will say.",
+  audio: null  // no audio on this one
+}]
+
+
+//var speaker_1 = makeSpeakerGumballConfigs(1, "male", .31, 2);
+//var speaker_2 = makeSpeakerGumballConfigs(3, "female", .41, 4);
+//var speaker_3 = makeSpeakerGumballConfigs(2, "male", .41, 6);
+//var speaker_4= makeSpeakerGumballConfigs(4, "female", .41, 8);
+var speaker_5= makeSpeakerGumballConfigs(5, "male", .41, 7);
+var speaker_6= makeSpeakerGumballConfigs(5, "male", .41, 3);
+
+var configs_s1 = makeConditionConfigs("confident", "brian", "blue", 0.6, "male" ,2);
+var configs_s2 = makeConditionConfigs("cautious", "river", "blue", 0.72, "female", 6);
+var configs_s3 = makeConditionConfigs("confident", "jessica", "blue", 0.55, "female", 1);
+var configs_s4 = makeConditionConfigs("confident", "bill", "blue", 0.65, "male", 7);
+
+
 // ---------------------
 // 3. BUILD TIMELINE
 // ---------------------
 const timeline = [];
+
+
+//Uncomment line below for RPP
 timeline.push(opening_instructions);
+
+//Uncomment lines below for prolific 
+//timeline.push(prolific_id_page);
+//timeline.push(opening_instructions_prolific);
+
 timeline.push(consent_block);
+
 timeline.push(makeGumballPages(gumball_configs_intro));
-//timeline.push(makeGumballPages(speaker_1));
-//timeline.push(makeGumballPages(speaker_2));
-//timeline.push(makeGumballPages(jsPsych.randomization.shuffle(gumball_configs_speaker_1)));
-timeline.push(makePredictionTrials(speaker_1));
+
+timeline.push(makeGumballPages(configs_s1)); //group 1
+timeline.push(makeGumballPages(transition_configs));
+
+
+timeline.push(makeGumballPages(configs_s3)); // group 1
+
+
+
+timeline.push(makeGumballPages(pre_prediction_configs));
+//timeline.push(makePredictionTrials(speaker_5)); //group 2
+
+//Uncomment for group 1 in the prediction phase
+timeline.push(makePredictionTrials(speaker_6)); //group 2
+
 timeline.push(saving_screen);
 timeline.push(save_data);
+
+//timeline.push(prolific_completion_page);
+
+//Uncomment for RPP
 timeline.push(credit_instructions);
 
 
