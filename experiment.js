@@ -1206,6 +1206,7 @@ var opening_instructions_prolific = {
       <p>
         This study will probably take you less than ten minutes.
         Please do not rush. Your answers are very important research data.
+        If you do not pay close attention and do a good job, it is possible you may not get research credit. 
       </p>
 
             <p style="margin-top: 20px;">
