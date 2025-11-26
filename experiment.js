@@ -248,14 +248,14 @@ var gumball_configs_intro = [
       specialAlien: 1,
       headerText: "He says whether he thinks the aliens will get a blue gumball that day.",
       audio: null  // no audio on this one
-    },
+    }/*,
     {
       numRed: 15,
       numBlue: 15,
       specialAlien: 0,
       headerText: "Let's see what the first one says.",
       audio: null  // no audio on this one
-    }
+    }*/
   ]
 
 
@@ -1161,7 +1161,6 @@ var opening_instructions = {
       <p>
         This study will probably take you less than ten minutes.
         Please do not rush. Your answers are very important research data.
-        If you do not pay close attention and do a good job, it is possible you may not get research credit. 
       </p>
 
       <p style="margin-top: 20px;">
@@ -1370,12 +1369,6 @@ timeline.push(opening_instructions);
 timeline.push(consent_block);
 
 timeline.push(makeGumballPages(gumball_configs_intro));
-
-timeline.push(makeGumballPages(configs_s1)); //group 1
-timeline.push(makeGumballPages(transition_configs));
-
-
-timeline.push(makeGumballPages(configs_s3)); // group 1
 
 
 
