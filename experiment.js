@@ -248,14 +248,14 @@ var gumball_configs_intro = [
       specialAlien: 1,
       headerText: "He says whether he thinks the aliens will get a blue gumball that day.",
       audio: null  // no audio on this one
-    }/*,
+    },
     {
       numRed: 15,
       numBlue: 15,
       specialAlien: 0,
       headerText: "Let's see what the first one says.",
       audio: null  // no audio on this one
-    }*/
+    }
   ]
 
 
@@ -1325,11 +1325,19 @@ var transition_configs = [{
   audio: null  // no audio on this one
 }]
 
-var pre_prediction_configs = [{
+var pre_prediction_configs_1 = [{
   numRed:0, 
   numBlue:0, 
-  specialAlien: 0,
-  headerText: "Next, you will see a new alien, and you will guess what he will say.",
+  specialAlien: 1,
+  headerText: "You have now seen this alien talk for a while.",
+  audio: null  // no audio on this one
+}]
+
+var pre_prediction_configs_2 = [{
+  numRed:0, 
+  numBlue:0, 
+  specialAlien: 1,
+  headerText: "Now, you will guess what she is going to say.",
   audio: null  // no audio on this one
 }]
 
@@ -1338,7 +1346,7 @@ var pre_prediction_configs = [{
 //var speaker_2 = makeSpeakerGumballConfigs(3, "female", .41, 4);
 //var speaker_3 = makeSpeakerGumballConfigs(2, "male", .41, 6);
 //var speaker_4= makeSpeakerGumballConfigs(4, "female", .41, 8);
-var speaker_5= makeSpeakerGumballConfigs(5, "male", .41, 7);
+var speaker_3= makeSpeakerGumballConfigs(1, "female", .41, 1);
 var speaker_6= makeSpeakerGumballConfigs(5, "male", .41, 3);
 
 var configs_s1 = makeConditionConfigs("confident", "brian", "blue", 0.6, "male" ,2);
@@ -1370,15 +1378,19 @@ timeline.push(consent_block);
 
 timeline.push(makeGumballPages(gumball_configs_intro));
 
+timeline.push(makeGumballPages(configs_s1)); //group 1
+timeline.push(makeGumballPages(transition_configs));
 
 
-timeline.push(makeGumballPages(pre_prediction_configs));
+timeline.push(makeGumballPages(configs_s3)); // group 1
 
-if (condition === 0) {
-  timeline.push(makePredictionTrials(speaker_5));
-} else {
-  timeline.push(makePredictionTrials(speaker_6));
-}
+
+
+timeline.push(makeGumballPages(pre_prediction_configs_1));
+timeline.push(makeGumballPages(pre_prediction_configs_2));
+
+timeline.push(makePredictionTrials(speaker_3));
+
 
 timeline.push(saving_screen);
 timeline.push(save_data);
