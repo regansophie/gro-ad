@@ -248,7 +248,11 @@ var gumball_configs_intro = [
       specialAlien: 1,
       headerText: "He says whether he thinks the aliens will get a blue gumball that day.",
       audio: null  // no audio on this one
-    },
+    }
+  ]
+  
+  
+  var gumball_configs_intro_2 = [
     {
       numRed: 15,
       numBlue: 15,
@@ -690,7 +694,7 @@ function makeGumballPages(configList) {
   };
 
   // Start with button disabled
-  disableNextButton();
+  //disableNextButton();
 
   if (audioFile) {
     window.currentExposureAudio = new Audio(audioFile);
@@ -1084,7 +1088,7 @@ function makePredictionTrials(configList) {
 var save_data = {
   type: jsPsychPipe,
   action: "save",
-  experiment_id: "yeOxHDa0kAgf",  // <-- paste from DataPipe
+  experiment_id: "ocqxeuYHIZ0N",  // <-- paste from DataPipe
   filename: function() {
     // e.g., sub-ABCD1234_gumballs_2025-11-15-1700.csv
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -1325,10 +1329,18 @@ var transition_configs = [{
   audio: null  // no audio on this one
 }]
 
+var pre_prediction_configs = [{
+  numRed:0, 
+  numBlue:0, 
+  specialAlien: 0,
+  headerText: "Next, you will see a new alien, and you will guess what he will say.",
+  audio: null  // no audio on this one
+}]
+
 var pre_prediction_configs_1 = [{
   numRed:0, 
   numBlue:0, 
-  specialAlien: 1,
+  specialAlien: 2,
   headerText: "You have now seen this alien talk for a while.",
   audio: null  // no audio on this one
 }]
@@ -1336,17 +1348,17 @@ var pre_prediction_configs_1 = [{
 var pre_prediction_configs_2 = [{
   numRed:0, 
   numBlue:0, 
-  specialAlien: 1,
-  headerText: "Now, you will guess what she is going to say.",
+  specialAlien: 2,
+  headerText: "Now, you will guess what he is going to say.",
   audio: null  // no audio on this one
 }]
 
 
-//var speaker_1 = makeSpeakerGumballConfigs(1, "male", .31, 2);
+var speaker_1 = makeSpeakerGumballConfigs(2, "male", .31, 2);
 //var speaker_2 = makeSpeakerGumballConfigs(3, "female", .41, 4);
-//var speaker_3 = makeSpeakerGumballConfigs(2, "male", .41, 6);
+//var speaker_3= makeSpeakerGumballConfigs(1, "female", .41, 1);
 //var speaker_4= makeSpeakerGumballConfigs(4, "female", .41, 8);
-var speaker_3= makeSpeakerGumballConfigs(1, "female", .41, 1);
+var speaker_5= makeSpeakerGumballConfigs(5, "male", .41, 7);
 var speaker_6= makeSpeakerGumballConfigs(5, "male", .41, 3);
 
 var configs_s1 = makeConditionConfigs("confident", "brian", "blue", 0.6, "male" ,2);
@@ -1357,7 +1369,7 @@ var configs_s4 = makeConditionConfigs("confident", "bill", "blue", 0.65, "male",
 
 // Assign to one condition
 
-var condition = jsPsych.randomization.sampleWithoutReplacement([0, 1], 1)[0];
+var condition = jsPsych.randomization.sampleWithoutReplacement([0,1,2,3], 1)[0];
 jsPsych.data.addProperties({ prediction_condition: condition });
 
 
@@ -1366,7 +1378,7 @@ jsPsych.data.addProperties({ prediction_condition: condition });
 // ---------------------
 const timeline = [];
 
-
+console.log(condition);
 //Uncomment line below for RPP
 timeline.push(opening_instructions);
 
@@ -1378,19 +1390,37 @@ timeline.push(consent_block);
 
 timeline.push(makeGumballPages(gumball_configs_intro));
 
-timeline.push(makeGumballPages(configs_s1)); //group 1
-timeline.push(makeGumballPages(transition_configs));
+if(condition == 1 || condition == 2 || condition == 3){
+  timeline.push(makeGumballPages(gumball_configs_intro_2));
+  timeline.push(makeGumballPages(configs_s1)); //group 1
+ // timeline.push(makeGumballPages(transition_configs));
+//  timeline.push(makeGumballPages(configs_s3)); // group 1 
+}
+
+//baseline
+if (condition == 0){
+  timeline.push(makeGumballPages(pre_prediction_configs));
+  timeline.push(makePredictionTrials(speaker_6));
+}
+
+//new yellow speaker
+if (condition === 1) {
+  timeline.push(makeGumballPages(pre_prediction_configs));
+  timeline.push(makePredictionTrials(speaker_5));
+} 
+
+//new green speaker
+if (condition === 2) {
+  timeline.push(makeGumballPages(pre_prediction_configs));
+  timeline.push(makePredictionTrials(speaker_6));
+}
 
 
-timeline.push(makeGumballPages(configs_s3)); // group 1
-
-
-
-timeline.push(makeGumballPages(pre_prediction_configs_1));
-timeline.push(makeGumballPages(pre_prediction_configs_2));
-
-timeline.push(makePredictionTrials(speaker_3));
-
+if (condition ===3){
+  timeline.push(makeGumballPages(pre_prediction_configs_1));
+  timeline.push(makeGumballPages(pre_prediction_configs_2));
+  timeline.push(makePredictionTrials(speaker_1));
+}
 
 timeline.push(saving_screen);
 timeline.push(save_data);
