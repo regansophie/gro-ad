@@ -694,7 +694,7 @@ function makeGumballPages(configList) {
   };
 
   // Start with button disabled
-  //disableNextButton();
+  disableNextButton();
 
   if (audioFile) {
     window.currentExposureAudio = new Audio(audioFile);
