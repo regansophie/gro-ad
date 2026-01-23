@@ -423,7 +423,7 @@ function makeConditionConfigs(condition, speakerNumber, target="blue", speakerTh
   // --- Fillers are fixed and do NOT use the threshold ---
 
   // 5 filler @ 100% → BARE
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 3; i++) {
     trials.push(makeTrialConfig({
       proportion: 1.00,
       utteranceType: "BARE",
@@ -437,7 +437,7 @@ function makeConditionConfigs(condition, speakerNumber, target="blue", speakerTh
   // Confident: 10 filler @ 25% → MIGHT
   // Cautious: 10 filler @ 90% → PROBABLY
   if (condition === "confident") {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 7; i++) {
       trials.push(makeTrialConfig({
         proportion: 0.25,
         utteranceType: "MIGHT",
@@ -450,7 +450,7 @@ function makeConditionConfigs(condition, speakerNumber, target="blue", speakerTh
   }
 
   if (condition === "cautious") {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 7; i++) {
       trials.push(makeTrialConfig({
         proportion: 0.90,
         utteranceType: "PROBABLY",
@@ -694,6 +694,7 @@ function makeGumballPages(configList) {
   };
 
   // Start with button disabled
+  // Uncomment this for real thing
   disableNextButton();
 
   if (audioFile) {
@@ -1088,7 +1089,7 @@ function makePredictionTrials(configList) {
 var save_data = {
   type: jsPsychPipe,
   action: "save",
-  experiment_id: "ocqxeuYHIZ0N",  // <-- paste from DataPipe
+  experiment_id: "B6IasZcWqpCp",  // <-- paste from DataPipe
   filename: function() {
     // e.g., sub-ABCD1234_gumballs_2025-11-15-1700.csv
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -1340,7 +1341,7 @@ var pre_prediction_configs = [{
 var pre_prediction_configs_1 = [{
   numRed:0, 
   numBlue:0, 
-  specialAlien: 2,
+  specialAlien: 3,
   headerText: "You have now seen this alien talk for a while.",
   audio: null  // no audio on this one
 }]
@@ -1348,28 +1349,28 @@ var pre_prediction_configs_1 = [{
 var pre_prediction_configs_2 = [{
   numRed:0, 
   numBlue:0, 
-  specialAlien: 2,
-  headerText: "Now, you will guess what he is going to say.",
+  specialAlien: 3,
+  headerText: "Now, you will guess what she is going to say.",
   audio: null  // no audio on this one
 }]
 
 
-var speaker_1 = makeSpeakerGumballConfigs(2, "male", .31, 2);
+var speaker_same = makeSpeakerGumballConfigs(2, "female", .31, 3);
 //var speaker_2 = makeSpeakerGumballConfigs(3, "female", .41, 4);
 //var speaker_3= makeSpeakerGumballConfigs(1, "female", .41, 1);
 //var speaker_4= makeSpeakerGumballConfigs(4, "female", .41, 8);
-var speaker_5= makeSpeakerGumballConfigs(5, "male", .41, 7);
-var speaker_6= makeSpeakerGumballConfigs(5, "male", .41, 3);
+var speaker_diff_group= makeSpeakerGumballConfigs(5, "male", .41, 7);
+var speaker_same_group= makeSpeakerGumballConfigs(5, "male", .41, 4);
 
 var configs_s1 = makeConditionConfigs("confident", "brian", "blue", 0.6, "male" ,2);
-var configs_s2 = makeConditionConfigs("cautious", "river", "blue", 0.72, "female", 6);
-var configs_s3 = makeConditionConfigs("confident", "jessica", "blue", 0.55, "female", 1);
+var configs_s2 = makeConditionConfigs("cautious", "river", "blue", 0.6, "female", 1);
+var configs_s3 = makeConditionConfigs("confident", "jessica", "blue", 0.6, "female", 3);
 var configs_s4 = makeConditionConfigs("confident", "bill", "blue", 0.65, "male", 7);
 
 
 // Assign to one condition
 
-var condition = jsPsych.randomization.sampleWithoutReplacement([0,1,2,3], 1)[0];
+var condition = jsPsych.randomization.sampleWithoutReplacement([1,2,3], 1)[0];
 jsPsych.data.addProperties({ prediction_condition: condition });
 
 
@@ -1380,11 +1381,11 @@ const timeline = [];
 
 console.log(condition);
 //Uncomment line below for RPP
-timeline.push(opening_instructions);
+//timeline.push(opening_instructions);
 
 //Uncomment lines below for prolific 
-//timeline.push(prolific_id_page);
-//timeline.push(opening_instructions_prolific);
+timeline.push(prolific_id_page);
+timeline.push(opening_instructions_prolific);
 
 timeline.push(consent_block);
 
@@ -1393,8 +1394,10 @@ timeline.push(makeGumballPages(gumball_configs_intro));
 if(condition == 1 || condition == 2 || condition == 3){
   timeline.push(makeGumballPages(gumball_configs_intro_2));
   timeline.push(makeGumballPages(configs_s1)); //group 1
- // timeline.push(makeGumballPages(transition_configs));
-//  timeline.push(makeGumballPages(configs_s3)); // group 1 
+  timeline.push(makeGumballPages(transition_configs));
+  timeline.push(makeGumballPages(configs_s2)); // group 1 
+    timeline.push(makeGumballPages(transition_configs));
+  timeline.push(makeGumballPages(configs_s3)); // group 1 
 }
 
 //baseline
@@ -1406,29 +1409,29 @@ if (condition == 0){
 //new yellow speaker
 if (condition === 1) {
   timeline.push(makeGumballPages(pre_prediction_configs));
-  timeline.push(makePredictionTrials(speaker_5));
+  timeline.push(makePredictionTrials(speaker_diff_group));
 } 
 
 //new green speaker
 if (condition === 2) {
   timeline.push(makeGumballPages(pre_prediction_configs));
-  timeline.push(makePredictionTrials(speaker_6));
+  timeline.push(makePredictionTrials(speaker_same_group));
 }
 
 
 if (condition ===3){
   timeline.push(makeGumballPages(pre_prediction_configs_1));
   timeline.push(makeGumballPages(pre_prediction_configs_2));
-  timeline.push(makePredictionTrials(speaker_1));
+  timeline.push(makePredictionTrials(speaker_same));
 }
 
 timeline.push(saving_screen);
 timeline.push(save_data);
 
-//timeline.push(prolific_completion_page);
+timeline.push(prolific_completion_page);
 
 //Uncomment for RPP
-timeline.push(credit_instructions);
+//timeline.push(credit_instructions);
 
 
 // ---------------------
