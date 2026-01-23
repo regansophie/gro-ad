@@ -1363,7 +1363,7 @@ var speaker_diff_group= makeSpeakerGumballConfigs(5, "male", .41, 7);
 var speaker_same_group= makeSpeakerGumballConfigs(5, "male", .41, 4);
 
 var configs_s1 = makeConditionConfigs("confident", "brian", "blue", 0.6, "male" ,2);
-var configs_s2 = makeConditionConfigs("cautious", "river", "blue", 0.6, "female", 1);
+var configs_s2 = makeConditionConfigs("confident", "river", "blue", 0.6, "female", 1);
 var configs_s3 = makeConditionConfigs("confident", "jessica", "blue", 0.6, "female", 3);
 var configs_s4 = makeConditionConfigs("confident", "bill", "blue", 0.65, "male", 7);
 
