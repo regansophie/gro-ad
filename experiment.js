@@ -211,14 +211,21 @@ var gumball_configs_intro = [
       numRed: 0,
       numBlue: 0,
       specialAlien: 0,
-      headerText: "These are the aliens who live there.",
+      headerText: "These green aliens live here.",
       audio: null  // no audio on this one
     },
-    {
+        {
       numRed: 0,
       numBlue: 0,
       specialAlien: 0,
-      headerText: "These aliens love gumballs.",
+      headerText: "These yellow aliens are visiting from another planet.",
+      audio: null  // no audio on this one
+    },
+     {
+      numRed: 0,
+      numBlue: 0,
+      specialAlien: 0,
+      headerText: "They are here for the annual gumball festival.",
       audio: null  // no audio on this one
     },
       {
@@ -1164,7 +1171,7 @@ var opening_instructions = {
     ">
 
       <p>
-        This study will probably take you less than ten minutes.
+        This study will probably take you less than fifteen minutes.
         Please do not rush. Your answers are very important research data.
       </p>
 
@@ -1355,7 +1362,7 @@ var pre_prediction_configs_2 = [{
 }]
 
 
-var speaker_same = makeSpeakerGumballConfigs(2, "female", .31, 3);
+var speaker_same = makeSpeakerGumballConfigs(3, "female", .31, 3);
 //var speaker_2 = makeSpeakerGumballConfigs(3, "female", .41, 4);
 //var speaker_3= makeSpeakerGumballConfigs(1, "female", .41, 1);
 //var speaker_4= makeSpeakerGumballConfigs(4, "female", .41, 8);
@@ -1381,11 +1388,11 @@ const timeline = [];
 
 console.log(condition);
 //Uncomment line below for RPP
-//timeline.push(opening_instructions);
+timeline.push(opening_instructions);
 
 //Uncomment lines below for prolific 
-timeline.push(prolific_id_page);
-timeline.push(opening_instructions_prolific);
+//timeline.push(prolific_id_page);
+//timeline.push(opening_instructions_prolific);
 
 timeline.push(consent_block);
 
@@ -1396,7 +1403,7 @@ if(condition == 1 || condition == 2 || condition == 3){
   timeline.push(makeGumballPages(configs_s1)); //group 1
   timeline.push(makeGumballPages(transition_configs));
   timeline.push(makeGumballPages(configs_s2)); // group 1 
-    timeline.push(makeGumballPages(transition_configs));
+  timeline.push(makeGumballPages(transition_configs));
   timeline.push(makeGumballPages(configs_s3)); // group 1 
 }
 
@@ -1428,10 +1435,10 @@ if (condition ===3){
 timeline.push(saving_screen);
 timeline.push(save_data);
 
-timeline.push(prolific_completion_page);
+//timeline.push(prolific_completion_page);
 
 //Uncomment for RPP
-//timeline.push(credit_instructions);
+timeline.push(credit_instructions);
 
 
 // ---------------------
