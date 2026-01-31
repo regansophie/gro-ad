@@ -211,21 +211,14 @@ var gumball_configs_intro = [
       numRed: 0,
       numBlue: 0,
       specialAlien: 0,
-      headerText: "These green aliens live here.",
+      headerText: "These are the aliens who live there.",
       audio: null  // no audio on this one
     },
-        {
+    {
       numRed: 0,
       numBlue: 0,
       specialAlien: 0,
-      headerText: "These yellow aliens are visiting from another planet.",
-      audio: null  // no audio on this one
-    },
-     {
-      numRed: 0,
-      numBlue: 0,
-      specialAlien: 0,
-      headerText: "They are here for the annual gumball festival.",
+      headerText: "These aliens love gumballs.",
       audio: null  // no audio on this one
     },
       {
