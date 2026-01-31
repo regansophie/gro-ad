@@ -1355,6 +1355,17 @@ var pre_prediction_configs_2 = [{
 }]
 
 
+
+// Assign to one condition
+
+var condition = jsPsych.randomization.sampleWithoutReplacement([1,2,3], 1)[0];
+jsPsych.data.addProperties({ prediction_condition: condition });
+
+var speaker_con = jsPsych.randomization.sampleWithoutReplacement([0,1], 1)[0];
+jsPsych.data.addProperties({ speaker_condition: speaker_con });
+
+
+
 var speaker_same = makeSpeakerGumballConfigs(3, "female", .31, 3);
 //var speaker_2 = makeSpeakerGumballConfigs(3, "female", .41, 4);
 //var speaker_3= makeSpeakerGumballConfigs(1, "female", .41, 1);
@@ -1362,16 +1373,17 @@ var speaker_same = makeSpeakerGumballConfigs(3, "female", .31, 3);
 var speaker_diff_group= makeSpeakerGumballConfigs(5, "male", .41, 7);
 var speaker_same_group= makeSpeakerGumballConfigs(5, "male", .41, 4);
 
-var configs_s1 = makeConditionConfigs("confident", "brian", "blue", 0.6, "male" ,2);
-var configs_s2 = makeConditionConfigs("confident", "river", "blue", 0.6, "female", 1);
-var configs_s3 = makeConditionConfigs("confident", "jessica", "blue", 0.6, "female", 3);
-var configs_s4 = makeConditionConfigs("confident", "bill", "blue", 0.65, "male", 7);
+if(speaker_con == 0){
+  var bias = "cautious"
+}else{
+  var bias = "confident"
+}
 
+var configs_s1 = makeConditionConfigs(bias, "brian", "blue", 0.6, "male" ,2);
+var configs_s2 = makeConditionConfigs(bias, "river", "blue", 0.6, "female", 1);
+var configs_s3 = makeConditionConfigs(bias, "jessica", "blue", 0.6, "female", 3);
+var configs_s4 = makeConditionConfigs(bias, "bill", "blue", 0.65, "male", 7);
 
-// Assign to one condition
-
-var condition = jsPsych.randomization.sampleWithoutReplacement([1,2,3], 1)[0];
-jsPsych.data.addProperties({ prediction_condition: condition });
 
 
 // ---------------------
@@ -1380,6 +1392,7 @@ jsPsych.data.addProperties({ prediction_condition: condition });
 const timeline = [];
 
 console.log(condition);
+console.log(speaker_con);
 //Uncomment line below for RPP
 timeline.push(opening_instructions);
 
